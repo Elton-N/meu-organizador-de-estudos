@@ -22,8 +22,8 @@ describe("Tarefas acadêmicas", () => {
   it("preserva marcar e desmarcar uma tarefa concluída", () => {
     const task = createTask(input, now);
     const completed = toggleTask([task], task.id);
-    expect(completed[0].completed).toBe(true);
-    expect(toggleTask(completed, task.id)[0].completed).toBe(false);
+    expect(completed[0]?.completed).toBe(true);
+    expect(toggleTask(completed, task.id)[0]?.completed).toBe(false);
   });
   it("permite tarefa sem agendamento", () => {
     expect(createTask({ ...input, scheduledAt: "" }, now).scheduledAt).toBeNull();
