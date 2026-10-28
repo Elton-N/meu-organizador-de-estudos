@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
-import { BookOpen, CalendarDays, CheckCheck, ChevronLeft, ChevronRight, ClipboardList, Clock3, ListPlus, Plus, Trash2, BellOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookOpen, CalendarDays, CheckCheck, ChevronLeft, ChevronRight, ClipboardList, Clock3, ListPlus, Plus, Trash2, BellOff, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createTask, filterTasks, localDate, priorities, toggleTask, type Priority, type Task } from "@/lib/tasks";
+import { createTask, filterTasks, localDate, priorities, renameTask, toggleTask } from "@/lib/tasks";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
@@ -14,24 +14,27 @@ export const Route = createFileRoute("/")({
   ] }), component: Index,
 });
 
-const priorityStyles: Record<Priority, string> = { Alta: "bg-priority-high/10 text-priority-high", Média: "bg-priority-medium/10 text-priority-medium", Baixa: "bg-priority-low/10 text-priority-low" };
-const dateTime = (value: string) => new Date(value).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const priorityStyles = { Alta: "bg-priority-high/10 text-priority-high", Média: "bg-priority-medium/10 text-priority-medium", Baixa: "bg-priority-low/10 text-priority-low" };
+const dateTime = (value) => new Date(value).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const field = "h-11 w-full min-w-0 rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring";
 
 function Index() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState([]);
   const [lists, setLists] = useState(["Geral", "Provas", "Trabalhos"]);
-  const [activeList, setActiveList] = useState<string | null>(null);
+  const [activeList, setActiveList] = useState(null);
   const [newList, setNewList] = useState("");
   const [showListForm, setShowListForm] = useState(false);
   const [text, setText] = useState("");
   const [list, setList] = useState("Geral");
-  const [priority, setPriority] = useState<Priority>("Média");
+  const [priority, setPriority] = useState("Média");
   const [scheduledAt, setScheduledAt] = useState("");
   const [error, setError] = useState("");
-  const [today, setToday] = useState<Date | null>(null);
+  const [today, setToday] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editError, setEditError] = useState("");
   useEffect(() => { setToday(new Date()); }, []);
   const completed = tasks.filter((task) => task.completed).length;
   const scheduled = tasks.filter((task) => task.scheduledAt && !task.completed).length;
@@ -42,7 +45,7 @@ function Index() {
     return day;
   }) : [];
 
-  function addTask(event: FormEvent) {
+  function addTask(event) {
     event.preventDefault();
     try {
       const task = createTask({ text, list, priority, scheduledAt });
@@ -51,13 +54,36 @@ function Index() {
       setActiveList(null); setSelectedDay(null);
     } catch (error) { setError(error instanceof Error ? error.message : "Não foi possível adicionar a tarefa."); }
   }
-  function addList(event: FormEvent) {
+  function addList(event) {
     event.preventDefault();
     const name = newList.trim();
     if (!name) return;
     if (lists.some((item) => item.toLocaleLowerCase("pt-BR") === name.toLocaleLowerCase("pt-BR"))) return;
     setLists((previous) => [...previous, name]); setList(name); setActiveList(name);
     setNewList(""); setShowListForm(false);
+  }
+
+  function startEditing(task) {
+    setEditingId(task.id);
+    setEditTitle(task.text);
+    setEditError("");
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setEditTitle("");
+    setEditError("");
+  }
+
+  function saveTitle(event, id) {
+    event.preventDefault();
+    try {
+      const updated = renameTask(tasks, id, editTitle);
+      setTasks(updated);
+      cancelEditing();
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : "Não foi possível salvar o título.");
+    }
   }
 
   return <main className="min-h-screen bg-background px-4 py-8 sm:px-8 sm:py-10">
@@ -99,7 +125,34 @@ function Index() {
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           </form></section>
           <section className="border-t border-border pt-5"><div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">{activeList ?? "Minhas tarefas"} <span className="ml-1 text-sm font-normal text-muted-foreground">({visible.length})</span></h2>{selectedDay && <Button variant="ghost" size="sm" onClick={() => setSelectedDay(null)}>Limpar filtro de dia</Button>}</div>
-            {visible.length === 0 ? <div className="py-8 text-center"><ClipboardList className="mx-auto mb-3 size-8 text-primary/60" /><p className="text-sm text-muted-foreground">{tasks.length === 0 ? "Nenhuma tarefa ainda. Adicione a primeira!" : "Nenhuma tarefa neste filtro."}</p></div> : <ul className="space-y-3">{visible.map((task) => <li key={task.id} className="flex items-start gap-3 rounded-lg border border-border bg-card p-4"><input type="checkbox" checked={task.completed} onChange={() => setTasks((previous) => toggleTask(previous, task.id))} aria-label={`Marcar ${task.text} como ${task.completed ? "pendente" : "concluída"}`} className="mt-1 size-5 shrink-0 accent-primary" /><div className="min-w-0 flex-1"><p className={`break-words font-medium ${task.completed ? "text-muted-foreground line-through" : ""}`}>{task.text}</p><div className="mt-2 flex flex-wrap items-center gap-2"><span className={`rounded px-2 py-0.5 text-xs font-medium ${priorityStyles[task.priority]}`}>{task.priority}</span><span className="break-all text-xs text-muted-foreground">{task.list}</span></div>{task.scheduledAt && <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary"><CalendarDays className="size-3.5 shrink-0" /><span>Agendada: {dateTime(task.scheduledAt)}</span></p>}<p className="mt-2 text-xs text-muted-foreground">Adicionada: {dateTime(task.createdAt)}</p></div><Button variant="ghost" size="icon" onClick={() => setTasks((previous) => previous.filter((item) => item.id !== task.id))} aria-label={`Excluir ${task.text}`} title="Excluir tarefa" className="shrink-0 text-destructive"><Trash2 /></Button></li>)}</ul>}
+            {visible.length === 0 ? <div className="py-8 text-center"><ClipboardList className="mx-auto mb-3 size-8 text-primary/60" /><p className="text-sm text-muted-foreground">{tasks.length === 0 ? "Nenhuma tarefa ainda. Adicione a primeira!" : "Nenhuma tarefa neste filtro."}</p></div> : <ul className="space-y-3">{visible.map((task) => (
+              <li key={task.id} className="flex items-start gap-3 rounded-lg border border-border bg-card p-4">
+                <input type="checkbox" checked={task.completed} onChange={() => setTasks((previous) => toggleTask(previous, task.id))} aria-label={`Marcar ${task.text} como ${task.completed ? "pendente" : "concluída"}`} className="mt-1 size-5 shrink-0 accent-primary" />
+                <div className="min-w-0 flex-1">
+                  {editingId === task.id ? (
+                    <form onSubmit={(event) => saveTitle(event, task.id)} noValidate className="space-y-2">
+                      <label htmlFor={`edit-${task.id}`} className="block text-sm font-medium">Título da tarefa</label>
+                      <input id={`edit-${task.id}`} autoFocus maxLength={500} value={editTitle} onChange={(event) => { setEditTitle(event.target.value); setEditError(""); }} aria-invalid={Boolean(editError)} aria-describedby={editError ? `edit-error-${task.id}` : undefined} className={field} />
+                      {editError && <p id={`edit-error-${task.id}`} role="alert" className="text-sm text-destructive">{editError}</p>}
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="submit" size="sm"><Check />Salvar</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={cancelEditing}><X />Cancelar</Button>
+                      </div>
+                    </form>
+                  ) : <p className={`break-words font-medium ${task.completed ? "text-muted-foreground line-through" : ""}`}>{task.text}</p>}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${priorityStyles[task.priority]}`}>{task.priority}</span>
+                    <span className="break-all text-xs text-muted-foreground">{task.list}</span>
+                  </div>
+                  {task.scheduledAt && <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary"><CalendarDays className="size-3.5 shrink-0" /><span>Agendada: {dateTime(task.scheduledAt)}</span></p>}
+                  <p className="mt-2 text-xs text-muted-foreground">Adicionada: {dateTime(task.createdAt)}</p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+                  {editingId !== task.id && <Button variant="ghost" size="icon" onClick={() => startEditing(task)} aria-label={`Editar ${task.text}`} title="Editar título"><Pencil /></Button>}
+                  <Button variant="ghost" size="icon" onClick={() => { setTasks((previous) => previous.filter((item) => item.id !== task.id)); if (editingId === task.id) cancelEditing(); }} aria-label={`Excluir ${task.text}`} title="Excluir tarefa" className="text-destructive"><Trash2 /></Button>
+                </div>
+              </li>
+            ))}</ul>}
           </section>
         </div>
       </div>
