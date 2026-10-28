@@ -1,14 +1,36 @@
-# Welcome to your Lovable project
+# Meu Organizador de Estudos
+
+Crie uma aplicação web chamada “Meu Organizador de Estudos”, destinada a estudantes iniciantes.
+
+O objetivo é ajudar os estudantes a organizar suas tarefas acadêmicas.
+
+A interface deve conter:
+
+Um título principal e uma mensagem de boas-vindas.
+
+Um campo para digitar uma nova tarefa.
+
+Um botão para adicionar tarefas.
+
+Uma lista de tarefas com opções para marcar como concluída e excluir.
+
+Um resumo da quantidade de tarefas cadastradas e concluídas.
+
+Utilize um visual moderno, limpo e acolhedor, com fundo claro, detalhes em azul e cartões organizados. Todos os textos devem estar em português brasileiro.
+
+A interface deve funcionar bem em computadores e celulares.
+
+Implemente as interações básicas sem exigir login, banco de dados ou serviços externos. Não adicione funcionalidades que não foram solicitadas. Priorize uma interface simples e fácil de utilizar.
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f8a457fc-76f2-4601-b618-3a066f5ef76c).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +42,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
