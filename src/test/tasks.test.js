@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { createTask, filterTasks, priorities, renameTask, toggleTask } from "@/lib/tasks";
 
 const now = new Date("2026-10-26T18:00:00Z");
-const input = { text: " Estudar matemática ", list: "Provas", priority: "Alta", scheduledAt: "2026-10-27T18:00:00Z" };
+const input = {
+  text: " Estudar matemática ",
+  list: "Provas",
+  priority: "Alta",
+  scheduledAt: "2026-10-27T18:00:00Z",
+};
 
 describe("Tarefas acadêmicas", () => {
   it("edita somente o título da tarefa escolhida e preserva seus dados", () => {
@@ -29,7 +34,8 @@ describe("Tarefas acadêmicas", () => {
   });
   it("aceita exatamente as prioridades Alta, Média e Baixa", () => {
     expect(priorities).toEqual(["Alta", "Média", "Baixa"]);
-    for (const priority of priorities) expect(createTask({ ...input, priority }, now).priority).toBe(priority);
+    for (const priority of priorities)
+      expect(createTask({ ...input, priority }, now).priority).toBe(priority);
   });
   it("separa tarefas por listas distintas", () => {
     const a = createTask(input, now);
