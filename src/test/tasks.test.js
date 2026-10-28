@@ -1,10 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { createTask, filterTasks, priorities, toggleTask } from "@/lib/tasks";
+import { createTask, filterTasks, priorities, renameTask, toggleTask } from "@/lib/tasks";
 
 const now = new Date("2026-10-26T18:00:00Z");
-const input = { text: " Estudar matemática ", list: "Provas", priority: "Alta" as const, scheduledAt: "2026-10-27T18:00:00Z" };
+const input = {
+  text: " Estudar matemática ",
+  list: "Provas",
+  priority: "Alta",
+  scheduledAt: "2026-10-27T18:00:00Z",
+};
 
 describe("Tarefas acadêmicas", () => {
+  it("edita somente o título da tarefa escolhida e preserva seus dados", () => {
+    const task = { ...createTask(input, now), completed: true };
+    const other = createTask({ ...input, text: "Ler história" }, now);
+    const result = renameTask([task, other], task.id, " Revisar matemática ");
+    expect(result).toEqual([{ ...task, text: "Revisar matemática" }, other]);
+    expect(task.text).toBe("Estudar matemática");
+  });
+  it("recusa salvar um título vazio sem alterar a tarefa", () => {
+    const task = createTask(input, now);
+    expect(() => renameTask([task], task.id, "")).toThrow("Digite o título da tarefa.");
+    expect(task.text).toBe("Estudar matemática");
+  });
+  it("recusa salvar um título composto apenas por espaços", () => {
+    const task = createTask(input, now);
+    expect(() => renameTask([task], task.id, "   ")).toThrow("Digite o título da tarefa.");
+    expect(task.text).toBe("Estudar matemática");
+  });
   it("registra a data e hora da criação sem confundir com o agendamento", () => {
     const task = createTask(input, now);
     expect(task.createdAt).toBe("2026-10-26T18:00:00.000Z");
@@ -12,7 +34,8 @@ describe("Tarefas acadêmicas", () => {
   });
   it("aceita exatamente as prioridades Alta, Média e Baixa", () => {
     expect(priorities).toEqual(["Alta", "Média", "Baixa"]);
-    for (const priority of priorities) expect(createTask({ ...input, priority }, now).priority).toBe(priority);
+    for (const priority of priorities)
+      expect(createTask({ ...input, priority }, now).priority).toBe(priority);
   });
   it("separa tarefas por listas distintas", () => {
     const a = createTask(input, now);
