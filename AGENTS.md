@@ -10,6 +10,6 @@
 <!-- LOVABLE:END -->
 
 - Keep task domain logic in a browser-safe module and use React session state until remote persistence is requested and its access model is approved; this preserves the existing no-login workflow.
-- Write task feature code in JavaScript/JSX, retaining the TypeScript framework infrastructure to minimize unrelated changes and make task code easier to edit.
+- Write all app code in JavaScript/JSX (routes, lib, hooks, components, tests, server entry); only auto-generated files (src/integrations/supabase/*, src/routeTree.gen.ts) and tool configs (vite.config.ts, vitest.config.ts, tsconfig.json) stay in TypeScript because the tooling regenerates or requires them.
 - Use semantic priority color tokens for task signals so labels remain readable and themes stay consistent.
 - Do not implement or enable SMS delivery until a provider connection is linked; never represent local scheduling as an active SMS reminder.
