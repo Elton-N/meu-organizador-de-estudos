@@ -1,16 +1,6 @@
-export const priorities = ["Alta", "Média", "Baixa"] as const;
-export type Priority = (typeof priorities)[number];
-export type Task = {
-  id: string;
-  text: string;
-  completed: boolean;
-  list: string;
-  priority: Priority;
-  createdAt: string;
-  scheduledAt: string | null;
-};
+export const priorities = ["Alta", "Média", "Baixa"];
 
-export function createTask(input: { text: string; list: string; priority: Priority; scheduledAt: string }, now = new Date()): Task {
+export function createTask(input, now = new Date()) {
   const text = input.text.trim();
   if (!text) throw new Error("Digite o nome da tarefa.");
   const scheduled = input.scheduledAt ? new Date(input.scheduledAt) : null;
@@ -20,14 +10,20 @@ export function createTask(input: { text: string; list: string; priority: Priori
   return { id: crypto.randomUUID(), text, list: input.list, priority: input.priority, completed: false, createdAt: now.toISOString(), scheduledAt: scheduled?.toISOString() ?? null };
 }
 
-export function toggleTask(tasks: Task[], id: string): Task[] {
+export function renameTask(tasks, id, title) {
+  const text = title.trim();
+  if (!text) throw new Error("Digite o título da tarefa.");
+  return tasks.map((task) => task.id === id ? { ...task, text } : task);
+}
+
+export function toggleTask(tasks, id) {
   return tasks.map((task) => task.id === id ? { ...task, completed: !task.completed } : task);
 }
 
-export function filterTasks(tasks: Task[], list: string | null, day: string | null): Task[] {
+export function filterTasks(tasks, list, day) {
   return tasks.filter((task) => (!list || task.list === list) && (!day || (task.scheduledAt && localDate(new Date(task.scheduledAt)) === day)));
 }
 
-export function localDate(date: Date): string {
+export function localDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
