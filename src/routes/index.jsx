@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  BookOpen,
   CalendarDays,
   CheckCheck,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
   Clock3,
+  Ghost,
   ListPlus,
   Plus,
   Trash2,
@@ -60,7 +60,7 @@ const dateTime = (value) =>
     minute: "2-digit",
   });
 const field =
-  "h-11 w-full min-w-0 rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring";
+  "study-field h-12 w-full min-w-0 border border-input px-4 text-base text-foreground";
 
 function Index() {
   const [tasks, setTasks] = useState([]);
@@ -73,6 +73,8 @@ function Index() {
   const [priority, setPriority] = useState("Média");
   const [scheduledAt, setScheduledAt] = useState("");
   const [error, setError] = useState("");
+  const [listError, setListError] = useState("");
+  const [announcement, setAnnouncement] = useState("");
   const [today, setToday] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -103,6 +105,7 @@ function Index() {
       setError("");
       setActiveList(null);
       setSelectedDay(null);
+      setAnnouncement(`Tarefa ${task.text} adicionada.`);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Não foi possível adicionar a tarefa.");
     }
@@ -111,13 +114,17 @@ function Index() {
     event.preventDefault();
     const name = newList.trim();
     if (!name) return;
-    if (lists.some((item) => item.toLocaleLowerCase("pt-BR") === name.toLocaleLowerCase("pt-BR")))
+    if (lists.some((item) => item.toLocaleLowerCase("pt-BR") === name.toLocaleLowerCase("pt-BR"))) {
+      setListError("Já existe uma lista com esse nome.");
       return;
+    }
     setLists((previous) => [...previous, name]);
     setList(name);
     setActiveList(name);
     setNewList("");
+    setListError("");
     setShowListForm(false);
+    setAnnouncement(`Lista ${name} criada.`);
   }
 
   function startEditing(task) {
@@ -137,6 +144,7 @@ function Index() {
     try {
       const updated = renameTask(tasks, id, editTitle);
       setTasks(updated);
+      setAnnouncement(`Tarefa renomeada para ${editTitle.trim()}.`);
       cancelEditing();
     } catch (error) {
       setEditError(error instanceof Error ? error.message : "Não foi possível salvar o título.");
@@ -146,23 +154,29 @@ function Index() {
   return (
     <main className="min-h-screen bg-background px-4 py-8 sm:px-8 sm:py-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="mt-1 rounded-lg bg-primary/10 p-3 text-primary">
-              <BookOpen className="size-6" />
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {announcement}
+        </p>
+        <header className="mb-10 flex flex-wrap items-start justify-between gap-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <div
+              aria-hidden="true"
+              className="mt-1 rounded-xl bg-primary p-3 text-primary-foreground shadow-sm"
+            >
+              <Ghost className="size-7" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl leading-tight text-primary sm:text-5xl">
                 Meu Organizador de Estudos
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Olá! Que bom ter você aqui. Vamos organizar seus estudos juntos? 📚
+              <p className="mt-1 text-lg text-muted-foreground">
+                Olá! Que bom ter você aqui. Vamos organizar seus estudos juntos? 🎃
               </p>
             </div>
           </div>
           {today && (
-            <p className="flex items-center gap-2 pt-2 text-sm capitalize text-muted-foreground">
-              <CalendarDays className="size-4 text-primary" />
+            <p className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-base capitalize text-muted-foreground">
+              <CalendarDays aria-hidden="true" className="size-4 shrink-0 text-primary" />
               {today.toLocaleDateString("pt-BR", {
                 weekday: "long",
                 day: "numeric",
@@ -171,7 +185,10 @@ function Index() {
             </p>
           )}
         </header>
-        <section aria-label="Resumo das tarefas" className="mb-8 grid grid-cols-3 gap-2 sm:gap-4">
+        <section
+          aria-label="Resumo das tarefas"
+          className="mb-8 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-4"
+        >
           {[
             { label: "Tarefas cadastradas", value: tasks.length, Icon: ClipboardList },
             { label: "Tarefas concluídas", value: completed, Icon: CheckCheck },
@@ -179,20 +196,23 @@ function Index() {
           ].map(({ label, value, Icon }) => (
             <div
               key={label}
-              className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-5"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm sm:gap-4 sm:p-5"
             >
-              <Icon className="size-5 shrink-0 text-primary" />
+              <Icon className="size-5 shrink-0 text-primary sm:size-6" />
               <div>
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-xs text-muted-foreground sm:text-sm">{label}</p>
+                <p className="font-display text-4xl leading-none text-primary">{value}</p>
+                <p className="text-base leading-tight text-muted-foreground">{label}</p>
               </div>
             </div>
           ))}
         </section>
-        <section aria-label="Agenda semanal" className="mb-8 border-y border-border py-5">
+        <section
+          aria-label="Agenda semanal"
+          className="mb-8 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6"
+        >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 font-semibold">
-              <CalendarDays className="size-5 text-primary" />
+            <h2 className="flex items-center gap-2 font-display text-2xl">
+                <CalendarDays aria-hidden="true" className="size-5 text-primary" />
               Sua semana
             </h2>
             <div className="flex items-center gap-2">
@@ -207,7 +227,7 @@ function Index() {
               >
                 <ChevronLeft />
               </Button>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-base text-muted-foreground">
                 {week[0]?.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })} —{" "}
                 {week[6]?.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
               </span>
@@ -224,6 +244,16 @@ function Index() {
               </Button>
             </div>
           </div>
+          <div
+            aria-hidden="true"
+            className="mb-2 grid grid-cols-7 gap-1 text-center text-sm font-bold capitalize text-muted-foreground sm:gap-3 sm:text-base"
+          >
+            {week.map((day) => (
+              <span key={localDate(day)}>
+                {day.toLocaleDateString("pt-BR", { weekday: "short" })}
+              </span>
+            ))}
+          </div>
           <div className="grid grid-cols-7 gap-1 sm:gap-3">
             {week.map((day) => {
               const key = localDate(day);
@@ -231,26 +261,24 @@ function Index() {
               const count = tasks.filter(
                 (task) => task.scheduledAt && localDate(new Date(task.scheduledAt)) === key,
               ).length;
+              const accessibleDay = day.toLocaleDateString("pt-BR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              });
               return (
                 <Button
                   key={key}
                   variant={selectedDay === key ? "default" : "ghost"}
                   aria-pressed={selectedDay === key}
-                  aria-label={day.toLocaleDateString("pt-BR", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}
+                  aria-label={`${accessibleDay}${count ? `, ${count} ${count === 1 ? "tarefa agendada" : "tarefas agendadas"}` : isToday ? ", hoje" : ""}`}
                   onClick={() => setSelectedDay(selectedDay === key ? null : key)}
-                  className={`h-24 min-w-0 flex-col gap-1 px-1 ${isToday && selectedDay !== key ? "bg-secondary text-primary" : ""}`}
+                  className={`h-20 min-w-0 flex-col gap-1 px-1 ${isToday && selectedDay !== key ? "border border-primary/40 bg-secondary text-primary" : ""}`}
                 >
-                  <span className="text-[11px] capitalize sm:text-xs">
-                    {day.toLocaleDateString("pt-BR", { weekday: "short" })}
-                  </span>
-                  <span className="text-xl font-semibold">{day.getDate()}</span>
-                  <span className="h-4 text-[10px]">
+                  <span className="font-display text-3xl leading-none">{day.getDate()}</span>
+                  <span className="h-4 text-sm leading-none">
                     {count
-                      ? `${count} ${count === 1 ? "tarefa" : "tarefas"}`
+                      ? count
                       : isToday
                         ? "Hoje"
                         : ""}
@@ -261,79 +289,12 @@ function Index() {
           </div>
         </section>
         <div className="grid gap-8 lg:grid-cols-[210px_minmax(0,1fr)]">
-          <aside>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold">Minhas listas</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Criar lista"
-                title="Criar lista"
-                onClick={() => setShowListForm(!showListForm)}
-              >
-                <ListPlus />
-              </Button>
-            </div>
-            <nav aria-label="Listas de tarefas" className="flex flex-wrap gap-1 lg:flex-col">
-              <Button
-                variant={activeList === null ? "secondary" : "ghost"}
-                className="justify-between"
-                onClick={() => setActiveList(null)}
-              >
-                Todas as tarefas <span className="text-xs">{tasks.length}</span>
-              </Button>
-              {lists.map((name) => (
-                <Button
-                  key={name}
-                  variant={activeList === name ? "secondary" : "ghost"}
-                  className="h-auto min-h-9 justify-between whitespace-normal text-left"
-                  onClick={() => {
-                    setActiveList(name);
-                    setList(name);
-                  }}
-                >
-                  <span className="break-all">{name}</span>
-                  <span className="ml-2 text-xs">
-                    {tasks.filter((task) => task.list === name).length}
-                  </span>
-                </Button>
-              ))}
-            </nav>
-            {showListForm && (
-              <form onSubmit={addList} className="mt-3 space-y-2">
-                <label htmlFor="new-list" className="text-xs text-muted-foreground">
-                  Nome da nova lista
-                </label>
-                <input
-                  id="new-list"
-                  autoFocus
-                  maxLength={60}
-                  value={newList}
-                  onChange={(e) => setNewList(e.target.value)}
-                  className={field}
-                  required
-                />
-                <Button type="submit" size="sm">
-                  <Plus />
-                  Criar lista
-                </Button>
-              </form>
-            )}
-            <div className="mt-6 border-t border-border pt-4 text-sm text-muted-foreground">
-              <p className="flex items-center gap-2 font-medium">
-                <BellOff className="size-4" />
-                Lembretes por SMS
-              </p>
-              <p className="mt-2 text-xs">Indisponíveis: serviço de SMS não conectado.</p>
-              <p className="mt-1 text-xs">Antecedência prevista: 30 minutos.</p>
-            </div>
-          </aside>
-          <div className="min-w-0">
-            <section className="mb-8">
-              <h2 className="mb-4 text-lg font-semibold">Nova tarefa</h2>
+          <div className="min-w-0 lg:col-start-2">
+            <section className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
+              <h2 className="mb-5 font-display text-3xl">Nova tarefa</h2>
               <form onSubmit={addTask} className="space-y-4">
                 <div>
-                  <label htmlFor="nova" className="mb-1.5 block text-sm font-medium">
+                  <label htmlFor="nova" className="mb-1.5 block text-base font-bold">
                     O que você precisa estudar?
                   </label>
                   <input
@@ -348,7 +309,7 @@ function Index() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="task-list" className="mb-1.5 block text-sm font-medium">
+                    <label htmlFor="task-list" className="mb-1.5 block text-base font-bold">
                       Lista
                     </label>
                     <select
@@ -363,7 +324,7 @@ function Index() {
                     </select>
                   </div>
                   <fieldset>
-                    <legend className="mb-1.5 text-sm font-medium">Prioridade</legend>
+                    <legend className="mb-1.5 text-base font-bold">Prioridade</legend>
                     <div className="grid h-11 grid-cols-3 gap-2">
                       {priorities.map((value) => (
                         <Button
@@ -372,7 +333,7 @@ function Index() {
                           variant="outline"
                           aria-pressed={priority === value}
                           onClick={() => setPriority(value)}
-                          className={`h-11 px-2 ${priority === value ? `ring-1 ring-current ${priorityStyles[value]}` : "text-muted-foreground"}`}
+                          className={`h-12 px-2 text-base ${priority === value ? `ring-1 ring-current ${priorityStyles[value]}` : "text-muted-foreground"}`}
                         >
                           <span
                             className={`size-2 shrink-0 rounded-full ${value === "Alta" ? "bg-priority-high" : value === "Média" ? "bg-priority-medium" : "bg-priority-low"}`}
@@ -385,7 +346,7 @@ function Index() {
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                   <div className="min-w-0 flex-1">
-                    <label htmlFor="schedule" className="mb-1.5 block text-sm font-medium">
+                    <label htmlFor="schedule" className="mb-1.5 block text-base font-bold">
                       Agendar para{" "}
                       <span className="font-normal text-muted-foreground">(opcional)</span>
                     </label>
@@ -397,23 +358,23 @@ function Index() {
                       className={field}
                     />
                   </div>
-                  <Button type="submit" className="h-11 px-6">
+                  <Button type="submit" className="h-12 px-6 text-lg">
                     <Plus />
                     Adicionar tarefa
                   </Button>
                 </div>
                 {error && (
-                  <p role="alert" className="text-sm text-destructive">
+                  <p role="alert" className="text-base text-destructive">
                     {error}
                   </p>
                 )}
               </form>
             </section>
-            <section className="border-t border-border pt-5">
+            <section className="border-t border-border pt-6">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold">
+                <h2 className="font-display text-3xl">
                   {activeList ?? "Minhas tarefas"}{" "}
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  <span className="ml-1 text-base font-normal text-muted-foreground">
                     ({visible.length})
                   </span>
                 </h2>
@@ -425,8 +386,8 @@ function Index() {
               </div>
               {visible.length === 0 ? (
                 <div className="py-8 text-center">
-                  <ClipboardList className="mx-auto mb-3 size-8 text-primary/60" />
-                  <p className="text-sm text-muted-foreground">
+                  <Ghost className="mx-auto mb-3 size-10 text-primary" />
+                  <p className="text-lg text-muted-foreground">
                     {tasks.length === 0
                       ? "Nenhuma tarefa ainda. Adicione a primeira!"
                       : "Nenhuma tarefa neste filtro."}
@@ -437,12 +398,17 @@ function Index() {
                   {visible.map((task) => (
                     <li
                       key={task.id}
-                      className="flex items-start gap-3 rounded-lg border border-border bg-card p-4"
+                      className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm"
                     >
                       <input
                         type="checkbox"
                         checked={task.completed}
-                        onChange={() => setTasks((previous) => toggleTask(previous, task.id))}
+                        onChange={() => {
+                          setTasks((previous) => toggleTask(previous, task.id));
+                          setAnnouncement(
+                            `Tarefa ${task.text} marcada como ${task.completed ? "pendente" : "concluída"}.`,
+                          );
+                        }}
                         aria-label={`Marcar ${task.text} como ${task.completed ? "pendente" : "concluída"}`}
                         className="mt-1 size-5 shrink-0 accent-primary"
                       />
@@ -455,7 +421,7 @@ function Index() {
                           >
                             <label
                               htmlFor={`edit-${task.id}`}
-                              className="block text-sm font-medium"
+                              className="block text-base font-bold"
                             >
                               Título da tarefa
                             </label>
@@ -476,7 +442,7 @@ function Index() {
                               <p
                                 id={`edit-error-${task.id}`}
                                 role="alert"
-                                className="text-sm text-destructive"
+                                className="text-base text-destructive"
                               >
                                 {editError}
                               </p>
@@ -499,28 +465,28 @@ function Index() {
                           </form>
                         ) : (
                           <p
-                            className={`break-words font-medium ${task.completed ? "text-muted-foreground line-through" : ""}`}
+                            className={`break-words text-lg font-bold ${task.completed ? "text-muted-foreground line-through" : ""}`}
                           >
                             {task.text}
                           </p>
                         )}
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <span
-                            className={`rounded px-2 py-0.5 text-xs font-medium ${priorityStyles[task.priority]}`}
+                            className={`rounded-md px-2 py-0.5 text-base font-bold ${priorityStyles[task.priority]}`}
                           >
                             {task.priority}
                           </span>
-                          <span className="break-all text-xs text-muted-foreground">
+                          <span className="break-all text-sm text-muted-foreground">
                             {task.list}
                           </span>
                         </div>
                         {task.scheduledAt && (
-                          <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-primary">
+                          <p className="mt-2 flex items-center gap-1.5 text-base font-medium text-primary">
                             <CalendarDays className="size-3.5 shrink-0" />
                             <span>Agendada: {dateTime(task.scheduledAt)}</span>
                           </p>
                         )}
-                        <p className="mt-2 text-xs text-muted-foreground">
+                        <p className="mt-2 text-base text-muted-foreground">
                           Adicionada: {dateTime(task.createdAt)}
                         </p>
                       </div>
@@ -541,6 +507,7 @@ function Index() {
                           size="icon"
                           onClick={() => {
                             setTasks((previous) => previous.filter((item) => item.id !== task.id));
+                            setAnnouncement(`Tarefa ${task.text} excluída.`);
                             if (editingId === task.id) cancelEditing();
                           }}
                           aria-label={`Excluir ${task.text}`}
@@ -556,6 +523,85 @@ function Index() {
               )}
             </section>
           </div>
+          <aside className="rounded-2xl border border-border bg-card p-5 lg:col-start-1 lg:row-start-1">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-2xl">Minhas listas</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Criar lista"
+                title="Criar lista"
+                aria-expanded={showListForm}
+                aria-controls="new-list-form"
+                onClick={() => setShowListForm(!showListForm)}
+              >
+                <ListPlus />
+              </Button>
+            </div>
+            <nav aria-label="Listas de tarefas" className="flex flex-wrap gap-2 lg:flex-col">
+              <Button
+                variant={activeList === null ? "secondary" : "ghost"}
+                className="justify-between"
+                onClick={() => setActiveList(null)}
+              >
+                Todas as tarefas <span className="text-base">{tasks.length}</span>
+              </Button>
+              {lists.map((name) => (
+                <Button
+                  key={name}
+                  variant={activeList === name ? "secondary" : "ghost"}
+                  className="h-auto min-h-10 justify-between whitespace-normal text-left"
+                  onClick={() => {
+                    setActiveList(name);
+                    setList(name);
+                  }}
+                >
+                  <span className="break-all">{name}</span>
+                  <span className="ml-2 text-base">
+                    {tasks.filter((task) => task.list === name).length}
+                  </span>
+                </Button>
+              ))}
+            </nav>
+            {showListForm && (
+              <form id="new-list-form" onSubmit={addList} className="mt-3 space-y-2">
+                <label htmlFor="new-list" className="text-base text-muted-foreground">
+                  Nome da nova lista
+                </label>
+                <input
+                  id="new-list"
+                  autoFocus
+                  maxLength={60}
+                  value={newList}
+                  onChange={(e) => {
+                    setNewList(e.target.value);
+                    setListError("");
+                  }}
+                  className={field}
+                  aria-invalid={Boolean(listError)}
+                  aria-describedby={listError ? "new-list-error" : undefined}
+                  required
+                />
+                {listError && (
+                  <p id="new-list-error" role="alert" className="text-base text-destructive">
+                    {listError}
+                  </p>
+                )}
+                <Button type="submit" size="sm">
+                  <Plus />
+                  Criar lista
+                </Button>
+              </form>
+            )}
+            <div className="mt-6 border-t border-border pt-4 text-base text-muted-foreground">
+              <h3 className="flex items-center gap-2 font-bold">
+                <BellOff aria-hidden="true" className="size-4" />
+                Lembretes por SMS
+              </h3>
+              <p className="mt-2 text-base">Indisponíveis: serviço de SMS não conectado.</p>
+              <p className="mt-1 text-base">Antecedência prevista: 30 minutos.</p>
+            </div>
+          </aside>
         </div>
       </div>
     </main>
